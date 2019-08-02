@@ -1,5 +1,6 @@
 package sammyt.jotnotes;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
@@ -7,10 +8,15 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -18,6 +24,8 @@ public class MainActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
     private FirebaseUser mUser;
+
+    private TextView mTextView;
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -39,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
 
                 Log.d(LOG_TAG, "Signed out");
                 Toast.makeText(MainActivity.this, "Signed out", Toast.LENGTH_SHORT).show();
-//                redirectToLogin();
+                redirectToLogin();
                 return true;
 
             default:
@@ -52,6 +60,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        mTextView = findViewById(R.id.main_text_view);
+
         mAuth = FirebaseAuth.getInstance();
     }
 
@@ -63,14 +73,41 @@ public class MainActivity extends AppCompatActivity {
         mUser = mAuth.getCurrentUser();
 
         if(mUser == null){
-            Toast.makeText(MainActivity.this, "no user signed in - redirecting", Toast.LENGTH_SHORT)
+            Toast.makeText(MainActivity.this, "Not signed in", Toast.LENGTH_SHORT)
                     .show();
             redirectToLogin();
+        }else{
+            loadDbText();
         }
     }
 
     private void redirectToLogin(){
         Intent loginIntent = new Intent(MainActivity.this, LoginActivity.class);
         startActivity(loginIntent);
+    }
+
+    private void loadDbText(){
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        db.collection("users")
+                .document(mUser.getUid())
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                        if(task.isSuccessful()){
+                            Log.d(LOG_TAG, "DocumentSnapshot:\n" + task.getResult().toString());
+
+                            String message = "Hurray! You did it, " + task.getResult().get("name")
+                                    + "!";
+                            mTextView.setText(message);
+                        }else{
+                            Log.w(LOG_TAG, "Error reading document.", task.getException());
+                            Toast.makeText(MainActivity.this, "Unable to retrieve user data",
+                                    Toast.LENGTH_SHORT)
+                                    .show();
+                        }
+                    }
+                });
     }
 }

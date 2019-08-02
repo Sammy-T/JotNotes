@@ -16,12 +16,19 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -29,6 +36,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private GoogleSignInClient mSignInClient;
     private FirebaseAuth mAuth;
+    private FirebaseUser mUser;
 
     private static final int SIGN_IN_REQUEST = 8119;
 
@@ -65,16 +73,41 @@ public class LoginActivity extends AppCompatActivity {
         super.onStart();
 
         // Check if the user is signed in (not null)
-        FirebaseUser currentUser = mAuth.getCurrentUser();
+        mUser = mAuth.getCurrentUser();
 
-        if(currentUser != null){
-            proceedToMain();
+        if(mUser != null){
+            updateUserDoc();
         }
     }
 
-    private void proceedToMain(){
-        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-        startActivity(intent);
+    // Creates or updates the user's Firestore document
+    private void updateUserDoc(){
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        Map<String, Object> userData = new HashMap<>();
+        userData.put("name", mUser.getDisplayName());
+
+        db.collection("users")
+                .document(mUser.getUid())
+                .set(userData, SetOptions.merge())
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        Log.d(LOG_TAG, "Document successfully written.");
+
+                        // Proceed to the main activity
+                        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                        startActivity(intent);
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.w(LOG_TAG, "Error writing document.", e);
+                        Toast.makeText(LoginActivity.this, "Database Error", Toast.LENGTH_SHORT)
+                                .show();
+                    }
+                });
     }
 
     private void signIn(){
@@ -94,7 +127,9 @@ public class LoginActivity extends AppCompatActivity {
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if(task.isSuccessful()){
                             Log.d(LOG_TAG, "SignInWithCredential: Success");
-                            proceedToMain();
+
+                            mUser = mAuth.getCurrentUser();
+                            updateUserDoc();
 
                         }else{
                             Log.w(LOG_TAG, "SignInWithCredential: Failure", task.getException());
