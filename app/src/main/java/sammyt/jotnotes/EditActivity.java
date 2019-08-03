@@ -17,6 +17,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
@@ -25,6 +26,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -69,6 +71,10 @@ public class EditActivity extends AppCompatActivity {
                 saveNoteData();
                 return true;
 
+            case R.id.action_delete:
+                deleteNoteData();
+                return true;
+
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -103,7 +109,7 @@ public class EditActivity extends AppCompatActivity {
                     .show();
             redirectToLogin();
 
-        }else if(mDocId != null){
+        }else if(mDocId != null){ // Check if we're working on an existing document
             loadNoteData();
         }
     }
@@ -142,6 +148,7 @@ public class EditActivity extends AppCompatActivity {
 
         Map<String, Object> noteData = new HashMap<>();
         noteData.put("note_text", noteText);
+        noteData.put("last_updated", new Timestamp(new Date()));
 
         CollectionReference userNotesRef = mDb.collection("users")
                 .document(mUser.getUid())
@@ -172,7 +179,6 @@ public class EditActivity extends AppCompatActivity {
                                 mDocId = task.getResult().getId();
                                 Toast.makeText(EditActivity.this, "Saved", Toast.LENGTH_SHORT)
                                         .show();
-
                             }else{
                                 Log.e(LOG_TAG, "Error creating note document", task.getException());
                             }
@@ -180,7 +186,37 @@ public class EditActivity extends AppCompatActivity {
                     });
         }
 
-        // Hide the keyboard
+        hideKeyboard();
+    }
+
+    // Deletes the current note from Firestore and returns to the Main Activity
+    private void deleteNoteData(){
+        if(mDocId == null){
+            return; // Return early if there's no document ID to delete
+        }
+
+        hideKeyboard();
+
+        mDb.collection("users")
+                .document(mUser.getUid())
+                .collection("notes")
+                .document(mDocId)
+                .delete()
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if(task.isSuccessful()){
+                            Toast.makeText(EditActivity.this, "Note Deleted", Toast.LENGTH_SHORT)
+                                    .show();
+                            onBackPressed(); // Return to the previous activity
+                        }else{
+                            Log.e(LOG_TAG, "Error deleting note document", task.getException());
+                        }
+                    }
+                });
+    }
+
+    private void hideKeyboard(){
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
     }
