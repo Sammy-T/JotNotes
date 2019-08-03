@@ -2,21 +2,31 @@ package sammyt.jotnotes;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
+
+import java.util.ArrayList;
+
+import sammyt.jotnotes.data.NoteAdapter;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -25,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseUser mUser;
 
-    private TextView mTextView;
+    private NoteAdapter mAdapter;
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -60,7 +70,22 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mTextView = findViewById(R.id.main_text_view);
+        RecyclerView notesRecycler = findViewById(R.id.notes_recycler);
+        FloatingActionButton addNoteFab = findViewById(R.id.add_note_fab);
+
+        addNoteFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, EditActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        GridLayoutManager layoutManager = new GridLayoutManager(MainActivity.this, 2);
+        notesRecycler.setLayoutManager(layoutManager);
+
+        mAdapter = new NoteAdapter(MainActivity.this, null);
+        notesRecycler.setAdapter(mAdapter);
 
         mAuth = FirebaseAuth.getInstance();
     }
@@ -77,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
                     .show();
             redirectToLogin();
         }else{
-            loadDbText();
+            loadNotes();
         }
     }
 
@@ -86,26 +111,30 @@ public class MainActivity extends AppCompatActivity {
         startActivity(loginIntent);
     }
 
-    private void loadDbText(){
+    // Loads the data to populate the Recyclerview
+    private void loadNotes(){
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         db.collection("users")
                 .document(mUser.getUid())
+                .collection("notes")
                 .get()
-                .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                     @Override
-                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
                         if(task.isSuccessful()){
-                            Log.d(LOG_TAG, "DocumentSnapshot:\n" + task.getResult().toString());
+                            // Retrieve each document ID and note text then update the adapter
+                            ArrayList<String[]> noteData = new ArrayList<>();
 
-                            String message = "Hurray! You did it, " + task.getResult().get("name")
-                                    + "!";
-                            mTextView.setText(message);
+                            for(QueryDocumentSnapshot document: task.getResult()){
+                                String[] docData = {document.getId(), document.get("note_text").toString()};
+                                noteData.add(docData);
+                            }
+
+                            mAdapter.updateNotes(noteData);
+
                         }else{
-                            Log.w(LOG_TAG, "Error reading document.", task.getException());
-                            Toast.makeText(MainActivity.this, "Unable to retrieve user data",
-                                    Toast.LENGTH_SHORT)
-                                    .show();
+                            Log.w(LOG_TAG, "Error retrieving notes.", task.getException());
                         }
                     }
                 });

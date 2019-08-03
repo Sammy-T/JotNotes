@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">Jot Notes</string>
 
+    <string name="save">Save</string>
     <string name="settings">Settings</string>
     <string name="sign_out">Sign Out</string>
 </resources>
