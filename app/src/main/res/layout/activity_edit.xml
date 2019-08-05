@@ -17,6 +17,6 @@
         android:inputType="textMultiLine|textCapSentences"
         android:minLines="10"
         android:gravity="top"
-        android:hint="Enter something" />
+        android:hint="Write your note" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

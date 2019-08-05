@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -38,6 +39,13 @@ public class LoginActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseUser mUser;
 
+    private SignInButton mSignInButton;
+    private ProgressBar mLoadingBar;
+
+    private enum SignInView{
+        SIGN_IN, LOADING
+    }
+
     private static final int SIGN_IN_REQUEST = 8119;
 
     @Override
@@ -45,9 +53,10 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        SignInButton signInButton = findViewById(R.id.sign_in_button);
+        mSignInButton = findViewById(R.id.sign_in_button);
+        mLoadingBar = findViewById(R.id.sign_in_loading);
 
-        signInButton.setOnClickListener(new View.OnClickListener() {
+        mSignInButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 signIn();
@@ -76,7 +85,25 @@ public class LoginActivity extends AppCompatActivity {
         mUser = mAuth.getCurrentUser();
 
         if(mUser != null){
+            setVisibleView(SignInView.LOADING);
             updateUserDoc();
+        }else{
+            setVisibleView(SignInView.SIGN_IN);
+        }
+    }
+
+    // Switches visibility between the Sign In Button and the Loading Progress Bar
+    private void setVisibleView(SignInView currentView){
+        switch(currentView){
+            case SIGN_IN:
+                mLoadingBar.setVisibility(View.GONE);
+                mSignInButton.setVisibility(View.VISIBLE);
+                break;
+
+            case LOADING:
+                mSignInButton.setVisibility(View.GONE);
+                mLoadingBar.setVisibility(View.VISIBLE);
+                break;
         }
     }
 
@@ -103,14 +130,18 @@ public class LoginActivity extends AppCompatActivity {
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
-                        Log.w(LOG_TAG, "Error writing document.", e);
+                        Log.e(LOG_TAG, "Error writing document.", e);
                         Toast.makeText(LoginActivity.this, "Database Error", Toast.LENGTH_SHORT)
                                 .show();
+
+                        setVisibleView(SignInView.SIGN_IN); // Show the Sign In Button
                     }
                 });
     }
 
     private void signIn(){
+        setVisibleView(SignInView.LOADING); // Show the Loading Progress Bar
+
         Intent signInIntent = mSignInClient.getSignInIntent();
         startActivityForResult(signInIntent, SIGN_IN_REQUEST);
     }
@@ -132,9 +163,11 @@ public class LoginActivity extends AppCompatActivity {
                             updateUserDoc();
 
                         }else{
-                            Log.w(LOG_TAG, "SignInWithCredential: Failure", task.getException());
+                            Log.e(LOG_TAG, "SignInWithCredential: Failure", task.getException());
                             Toast.makeText(LoginActivity.this, "Sign in failed", Toast.LENGTH_SHORT)
                                     .show();
+
+                            setVisibleView(SignInView.SIGN_IN); // Show the Sign In Button
                         }
                     }
                 });
@@ -153,9 +186,11 @@ public class LoginActivity extends AppCompatActivity {
                 firebaseAuthWithGoogle(account);
 
             }catch(ApiException e){
-                Log.w(LOG_TAG, "Google sign in failed.", e);
+                Log.e(LOG_TAG, "Google sign in failed.", e);
                 Toast.makeText(LoginActivity.this, "Google Sign in failed", Toast.LENGTH_SHORT)
                         .show();
+
+                setVisibleView(SignInView.SIGN_IN); // Show the Sign In Button
             }
         }
     }
