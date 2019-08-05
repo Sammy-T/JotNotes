@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -81,7 +82,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        GridLayoutManager layoutManager = new GridLayoutManager(MainActivity.this, 2);
+        StaggeredGridLayoutManager layoutManager = new StaggeredGridLayoutManager(2,
+                StaggeredGridLayoutManager.VERTICAL);
         notesRecycler.setLayoutManager(layoutManager);
 
         mAdapter = new NoteAdapter(MainActivity.this, null);
