@@ -11,7 +11,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -19,7 +18,6 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -58,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
 
                 Log.d(LOG_TAG, "Signed out");
                 Toast.makeText(MainActivity.this, "Signed out", Toast.LENGTH_SHORT).show();
+
                 redirectToLogin();
                 return true;
 
@@ -125,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onComplete(@NonNull Task<QuerySnapshot> task) {
                         if(task.isSuccessful()){
-                            // Retrieve each document ID and note text then update the adapter
+                            // Retrieve each Document ID and Note Text then update the adapter
                             ArrayList<String[]> noteData = new ArrayList<>();
 
                             for(QueryDocumentSnapshot document: task.getResult()){
@@ -136,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
                             mAdapter.updateNotes(noteData);
 
                         }else{
-                            Log.w(LOG_TAG, "Error retrieving notes.", task.getException());
+                            Log.e(LOG_TAG, "Error retrieving notes.", task.getException());
                         }
                     }
                 });

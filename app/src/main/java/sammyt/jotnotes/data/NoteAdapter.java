@@ -21,7 +21,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder>{
     private final String LOG_TAG = this.getClass().getSimpleName();
 
     private Context mContext;
-    private ArrayList<String[]> mNoteList = new ArrayList<>(); // String[documentId, noteText]
+    private ArrayList<String[]> mNoteList = new ArrayList<>(); // String[Document ID, Note Text]
 
     public static final String EXTRA_DOC_ID = "extra_doc_id";
 
@@ -72,6 +72,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder>{
                 int pos = holder.getAdapterPosition();
                 String docId = mNoteList.get(pos)[0];
 
+                // Open the Edit Activity w/ the Document ID passed in
                 Intent intent = new Intent(mContext, EditActivity.class);
                 intent.putExtra(EXTRA_DOC_ID, docId);
 

@@ -144,6 +144,8 @@ public class EditActivity extends AppCompatActivity {
     }
 
     private void saveNoteData(){
+        hideKeyboard();
+
         String noteText = mNoteEdit.getText().toString();
 
         Map<String, Object> noteData = new HashMap<>();
@@ -166,6 +168,9 @@ public class EditActivity extends AppCompatActivity {
                                         .show();
                             }else{
                                 Log.e(LOG_TAG, "Error updating note document", task.getException());
+                                Toast.makeText(EditActivity.this, "Error updating note",
+                                        Toast.LENGTH_SHORT)
+                                        .show();
                             }
                         }
                     });
@@ -181,18 +186,19 @@ public class EditActivity extends AppCompatActivity {
                                         .show();
                             }else{
                                 Log.e(LOG_TAG, "Error creating note document", task.getException());
+                                Toast.makeText(EditActivity.this, "Error creating note",
+                                        Toast.LENGTH_SHORT)
+                                        .show();
                             }
                         }
                     });
         }
-
-        hideKeyboard();
     }
 
     // Deletes the current note from Firestore and returns to the Main Activity
     private void deleteNoteData(){
         if(mDocId == null){
-            return; // Return early if there's no document ID to delete
+            return; // Return early if there's no Document ID to delete
         }
 
         hideKeyboard();
@@ -211,6 +217,8 @@ public class EditActivity extends AppCompatActivity {
                             onBackPressed(); // Return to the previous activity
                         }else{
                             Log.e(LOG_TAG, "Error deleting note document", task.getException());
+                            Toast.makeText(EditActivity.this, "Error deleting note", Toast.LENGTH_SHORT)
+                                    .show();
                         }
                     }
                 });
