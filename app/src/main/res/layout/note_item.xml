@@ -5,13 +5,16 @@
     android:layout_height="wrap_content"
     android:padding="12dp"
     android:layout_margin="3dp"
-    android:background="@color/colorPrimaryDark">
+    android:clickable="true"
+    android:foreground="?attr/selectableItemBackground"
+    android:background="@color/colorPrimaryLt2">
 
     <TextView
         android:id="@+id/note_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:maxHeight="100dp"
-        android:textColor="#FFFFFF"
-        android:text="some text"/>
+        android:textColor="#000000"
+        android:alpha="0.75"
+        android:text="some text"
+        style="@style/note_item" />
 </FrameLayout>
