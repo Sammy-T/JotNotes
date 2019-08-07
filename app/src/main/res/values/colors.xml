@@ -5,4 +5,7 @@
     <color name="colorPrimaryLt">#4fb3bf</color>
     <color name="colorPrimaryLt2">#b3f9ff</color>
     <color name="colorAccent">#880e4f</color>
+
+    <color name="colorPrimaryTrans">#A600838e</color>
+    <color name="colorPrimaryLt2Trans">#B3b3f9ff</color>
 </resources>

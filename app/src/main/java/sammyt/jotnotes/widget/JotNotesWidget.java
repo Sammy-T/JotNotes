@@ -1,4 +1,4 @@
-package sammyt.jotnotes;
+package sammyt.jotnotes.widget;
 
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
@@ -7,10 +7,9 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.util.Log;
 import android.widget.RemoteViews;
 
-import sammyt.jotnotes.JotNotesWidgetService;
+import sammyt.jotnotes.EditActivity;
 import sammyt.jotnotes.R;
 
 /**
@@ -45,23 +44,16 @@ public class JotNotesWidget extends AppWidgetProvider {
         // object above.
         views.setEmptyView(R.id.widget_list, R.id.empty_view);
 
-        //// TODO: Clean up
-        // Set up the Refresh Intent to update the widget
-//        Intent refreshIntent = new Intent(context, JotNotesWidget.class);
-//        refreshIntent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
-//        refreshIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, allWidgetIds);
-//
-//        PendingIntent refreshPendingIntent = PendingIntent.getBroadcast(context, REQ_REFRESH_WIDGETS,
-//                refreshIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-//
-//        views.setOnClickPendingIntent(R.id.widget_refresh, refreshPendingIntent);
-
         // Set up the Pending Intent Template to use with our Widget Service's Fill-in Intent
         Intent editIntent = new Intent(context, EditActivity.class);
         PendingIntent editPendingIntent = PendingIntent.getActivity(context, REQ_EDIT_ACTIVITY,
                 editIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         views.setPendingIntentTemplate(R.id.widget_list, editPendingIntent);
+
+        // Use the same Edit Activity pending intent to open up a blank activity
+        // when the button is clicked
+        views.setOnClickPendingIntent(R.id.widget_add_note, editPendingIntent);
 
         // Instruct the widget manager to update the widget
         appWidgetManager.updateAppWidget(appWidgetId, views);

@@ -28,13 +28,13 @@ import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.SetOptions;
 
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import sammyt.jotnotes.data.NoteAdapter;
+import sammyt.jotnotes.widget.JotNotesWidget;
 
 public class EditActivity extends AppCompatActivity {
 
@@ -207,13 +207,6 @@ public class EditActivity extends AppCompatActivity {
         }
     }
 
-    private void updateWidgets(){
-        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(EditActivity.this);
-        int[] ids = appWidgetManager.getAppWidgetIds(new ComponentName(EditActivity.this,
-                JotNotesWidget.class));
-        appWidgetManager.notifyAppWidgetViewDataChanged(ids, R.id.widget_list);
-    }
-
     // Deletes the current note from Firestore and returns to the Main Activity
     private void deleteNoteData(){
         if(mDocId == null){
@@ -233,6 +226,7 @@ public class EditActivity extends AppCompatActivity {
                         if(task.isSuccessful()){
                             Toast.makeText(EditActivity.this, "Note Deleted", Toast.LENGTH_SHORT)
                                     .show();
+                            updateWidgets();
                             onBackPressed(); // Return to the previous activity
                         }else{
                             Log.e(LOG_TAG, "Error deleting note document", task.getException());
@@ -246,5 +240,13 @@ public class EditActivity extends AppCompatActivity {
     private void hideKeyboard(){
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+    }
+
+    // Notifies any set widgets to update their data
+    private void updateWidgets(){
+        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(EditActivity.this);
+        int[] ids = appWidgetManager.getAppWidgetIds(new ComponentName(EditActivity.this,
+                JotNotesWidget.class));
+        appWidgetManager.notifyAppWidgetViewDataChanged(ids, R.id.widget_list);
     }
 }

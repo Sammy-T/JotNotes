@@ -1,4 +1,4 @@
-package sammyt.jotnotes;
+package sammyt.jotnotes.widget;
 
 import android.content.Context;
 import android.content.Intent;
@@ -18,6 +18,7 @@ import com.google.firebase.firestore.QuerySnapshot;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 
+import sammyt.jotnotes.R;
 import sammyt.jotnotes.data.NoteAdapter;
 
 public class JotNotesWidgetService extends RemoteViewsService {
