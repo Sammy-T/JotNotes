@@ -5,6 +5,8 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -174,6 +176,7 @@ public class EditActivity extends AppCompatActivity {
                             if(task.isSuccessful()){
                                 Toast.makeText(EditActivity.this, "Saved", Toast.LENGTH_SHORT)
                                         .show();
+                                updateWidgets();
                             }else{
                                 Log.e(LOG_TAG, "Error updating note document", task.getException());
                                 Toast.makeText(EditActivity.this, "Error updating note",
@@ -192,6 +195,7 @@ public class EditActivity extends AppCompatActivity {
                                 mDocId = task.getResult().getId();
                                 Toast.makeText(EditActivity.this, "Saved", Toast.LENGTH_SHORT)
                                         .show();
+                                updateWidgets();
                             }else{
                                 Log.e(LOG_TAG, "Error creating note document", task.getException());
                                 Toast.makeText(EditActivity.this, "Error creating note",
@@ -201,6 +205,13 @@ public class EditActivity extends AppCompatActivity {
                         }
                     });
         }
+    }
+
+    private void updateWidgets(){
+        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(EditActivity.this);
+        int[] ids = appWidgetManager.getAppWidgetIds(new ComponentName(EditActivity.this,
+                JotNotesWidget.class));
+        appWidgetManager.notifyAppWidgetViewDataChanged(ids, R.id.widget_list);
     }
 
     // Deletes the current note from Firestore and returns to the Main Activity
