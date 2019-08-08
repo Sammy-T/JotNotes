@@ -15,6 +15,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -77,6 +80,14 @@ public class MainActivity extends AppCompatActivity {
 
         RecyclerView notesRecycler = findViewById(R.id.notes_recycler);
         FloatingActionButton addNoteFab = findViewById(R.id.add_note_fab);
+        AdView adView = findViewById(R.id.ad_view);
+
+        // Initialize the Mobile Ads SDK w/ my App ID
+        MobileAds.initialize(this, getString(R.string.admob_app_id));
+
+        // Load an ad
+        AdRequest adRequest = new AdRequest.Builder().build();
+        adView.loadAd(adRequest);
 
         addNoteFab.setOnClickListener(new View.OnClickListener() {
             @Override
