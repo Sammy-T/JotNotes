@@ -9,6 +9,11 @@
         android:roundIcon="@mipmap/ic_jot_notes_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="@string/admob_app_id" />
+
         <service
             android:name=".widget.JotNotesWidgetService"
             android:permission="android.permission.BIND_REMOTEVIEWS"

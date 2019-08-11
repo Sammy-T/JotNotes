@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -15,6 +16,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -50,7 +54,8 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         switch(id) {
-            case R.id.action_settings:
+            case R.id.action_about:
+                openAboutPage();
                 return true;
 
             case R.id.action_sign_out:
@@ -67,6 +72,16 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // Open the About url in a browser
+    public void openAboutPage(){
+        Uri webpage = Uri.parse("https://trackforest.net/jot_notes/index.html");
+        Intent intent = new Intent(Intent.ACTION_VIEW, webpage);
+
+        if(intent.resolveActivity(this.getPackageManager()) != null){
+            startActivity(intent);
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -77,6 +92,14 @@ public class MainActivity extends AppCompatActivity {
 
         RecyclerView notesRecycler = findViewById(R.id.notes_recycler);
         FloatingActionButton addNoteFab = findViewById(R.id.add_note_fab);
+        AdView adView = findViewById(R.id.ad_view);
+
+        // Initialize the Mobile Ads SDK w/ my App ID
+        MobileAds.initialize(this, getString(R.string.admob_app_id));
+
+        // Load an ad
+        AdRequest adRequest = new AdRequest.Builder().build();
+        adView.loadAd(adRequest);
 
         addNoteFab.setOnClickListener(new View.OnClickListener() {
             @Override
