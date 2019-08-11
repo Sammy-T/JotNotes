@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -53,7 +54,8 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         switch(id) {
-            case R.id.action_settings:
+            case R.id.action_about:
+                openAboutPage();
                 return true;
 
             case R.id.action_sign_out:
@@ -67,6 +69,16 @@ public class MainActivity extends AppCompatActivity {
 
             default:
                 return super.onOptionsItemSelected(item);
+        }
+    }
+
+    // Open the About url in a browser
+    public void openAboutPage(){
+        Uri webpage = Uri.parse("https://trackforest.net/jot_notes/index.html");
+        Intent intent = new Intent(Intent.ACTION_VIEW, webpage);
+
+        if(intent.resolveActivity(this.getPackageManager()) != null){
+            startActivity(intent);
         }
     }
 
