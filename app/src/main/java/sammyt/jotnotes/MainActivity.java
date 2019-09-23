@@ -19,6 +19,7 @@ import android.widget.Toast;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -28,8 +29,13 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.functions.FirebaseFunctions;
+import com.google.firebase.functions.FirebaseFunctionsException;
+import com.google.firebase.functions.HttpsCallableResult;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import sammyt.jotnotes.data.NoteAdapter;
 
@@ -58,6 +64,11 @@ public class MainActivity extends AppCompatActivity {
                 openAboutPage();
                 return true;
 
+            case R.id.action_delete:
+                //// TODO: Verify action & re-authenticate user before performing delete
+                deleteAccount();
+                return true;
+
             case R.id.action_sign_out:
                 mAuth.signOut();
 
@@ -80,6 +91,55 @@ public class MainActivity extends AppCompatActivity {
         if(intent.resolveActivity(this.getPackageManager()) != null){
             startActivity(intent);
         }
+    }
+
+    // Deletes the user's data from Firestore
+    private void deleteAccount(){
+        String path = "users/" + mUser.getUid();
+
+        deleteRecursive(path)
+                .addOnCompleteListener(new OnCompleteListener<HashMap>() {
+                    @Override
+                    public void onComplete(@NonNull Task<HashMap> task) {
+                        if(task.isSuccessful()){
+                            Log.d(LOG_TAG, "Successful notes delete. " + task.getResult());
+                            //// TODO: Delete user
+                        }else{
+                            Exception e = task.getException();
+                            Log.e(LOG_TAG, "Error deleting notes.", task.getException());
+
+                            if(e instanceof FirebaseFunctionsException){
+                                FirebaseFunctionsException ffe = (FirebaseFunctionsException) e;
+                                FirebaseFunctionsException.Code code = ffe.getCode();
+                                Object details = ffe.getDetails();
+
+                                Log.e(LOG_TAG, "Functions Exception on Delete Notes. code: " + code
+                                        + "\ndetails: " + details, ffe);
+                            }
+                        }
+                    }
+                });
+    }
+
+    // Gets the Recursive Delete callable Cloud Function
+    private Task<HashMap> deleteRecursive(String path){
+        // Create the arguments to the callable function.
+        Map<String, Object> data = new HashMap<>();
+        data.put("path", path);
+
+        return FirebaseFunctions.getInstance()
+                .getHttpsCallable("recursiveDelete")
+                .call(data)
+                .continueWith(new Continuation<HttpsCallableResult, HashMap>() {
+                    @Override
+                    public HashMap then(@NonNull Task<HttpsCallableResult> task) throws Exception {
+                        // This continuation runs on either success or failure, but if the task
+                        // has failed then getResult() will throw an Exception which will be
+                        // propagated down
+                        HashMap result = (HashMap) task.getResult().getData();
+                        return result;
+                    }
+                });
     }
 
     @Override
