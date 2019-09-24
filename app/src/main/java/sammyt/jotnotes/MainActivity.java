@@ -3,7 +3,6 @@ package sammyt.jotnotes;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
@@ -28,10 +27,8 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.AuthCredential;
-import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.GetTokenResult;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
@@ -112,8 +109,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onNegativeClick(DeleteAccountDialog dialog) {
-            }
+            public void onNegativeClick(DeleteAccountDialog dialog) {}
         });
         deleteDialog.show(getSupportFragmentManager(), "DeleteAccountDialog");
     }
@@ -132,16 +128,33 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(signInIntent, RE_AUTH_DEL_REQUEST);
     }
 
+    // Processes the result for the Sign In Intent
+    private void processAuthIntent(Intent data){
+        Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+
+        try{
+            // Google Sign In was successful, get the credential
+            GoogleSignInAccount account = task.getResult(ApiException.class);
+            AuthCredential credential = GoogleAuthProvider.getCredential(account.getIdToken(), null);
+
+            mUser.reauthenticate(credential).addOnCompleteListener(mReAuthListener);
+        }catch(ApiException e){
+            Log.e(LOG_TAG, "Google sign in failed.", e);
+            Toast.makeText(this, "Google Sign in failed", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     private OnCompleteListener<Void> mReAuthListener = new OnCompleteListener<Void>() {
         @Override
         public void onComplete(@NonNull Task<Void> task) {
             if(task.isSuccessful()) {
                 Log.d(LOG_TAG, mUser + " re-authenticated.");
 
-                // Delete the user's data
-                deleteAccount();
+                deleteAccount(); // Delete the user's data
             }else{
                 Log.e(LOG_TAG, "Error re-authenticating user.", task.getException());
+                Toast.makeText(MainActivity.this, getString(R.string.delete_account_error),
+                        Toast.LENGTH_SHORT).show();
             }
         }
     };
@@ -163,6 +176,9 @@ public class MainActivity extends AppCompatActivity {
                             Exception e = task.getException();
                             Log.e(LOG_TAG, "Error deleting account.", task.getException());
 
+                            Toast.makeText(MainActivity.this, getString(R.string.delete_account_error),
+                                    Toast.LENGTH_SHORT).show();
+
                             if(e instanceof FirebaseFunctionsException){
                                 FirebaseFunctionsException ffe = (FirebaseFunctionsException) e;
                                 FirebaseFunctionsException.Code code = ffe.getCode();
@@ -182,17 +198,16 @@ public class MainActivity extends AppCompatActivity {
             String message;
 
             if(task.isSuccessful()) {
-                message = "Your account has been deleted.";
+                message = getString(R.string.delete_account_success);
                 Log.d(LOG_TAG, message);
 
                 redirectToLogin();
             }else{
-                message = "There was an error deleting your account.";
+                message = getString(R.string.delete_account_error);
                 Log.e(LOG_TAG, message, task.getException());
             }
 
-            Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT)
-                    .show();
+            Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
         }
     };
 
@@ -310,22 +325,7 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         if(requestCode == RE_AUTH_DEL_REQUEST){
-            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
-
-            try{
-                // Google Sign In was successful
-                GoogleSignInAccount account = task.getResult(ApiException.class);
-
-                // Get a Firebase credential
-                AuthCredential credential = GoogleAuthProvider.getCredential(account.getIdToken(), null);
-
-                mUser.reauthenticate(credential).addOnCompleteListener(mReAuthListener);
-
-            }catch(ApiException e){
-                Log.e(LOG_TAG, "Google sign in failed.", e);
-                Toast.makeText(this, "Google Sign in failed", Toast.LENGTH_SHORT)
-                        .show();
-            }
+            processAuthIntent(data);
         }
     }
 }

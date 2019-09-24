@@ -15,6 +15,9 @@
     <string name="delete_account_confirm">Are you sure you want to delete your account? This action
     cannot be undone.</string>
 
+    <string name="delete_account_success">Your account has been deleted.</string>
+    <string name="delete_account_error">There was an error deleting your account.</string>
+
     <string name="confirm">Confirm</string>
     <string name="cancel">Cancel</string>
 
