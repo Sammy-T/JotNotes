@@ -19,12 +19,20 @@ import android.widget.Toast;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.GetTokenResult;
+import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -38,6 +46,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import sammyt.jotnotes.data.NoteAdapter;
+import sammyt.jotnotes.dialog.DeleteAccountDialog;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -47,6 +56,8 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseUser mUser;
 
     private NoteAdapter mAdapter;
+
+    private static final int RE_AUTH_DEL_REQUEST = 829;
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -65,8 +76,7 @@ public class MainActivity extends AppCompatActivity {
                 return true;
 
             case R.id.action_delete:
-                //// TODO: Verify action & re-authenticate user before performing delete
-                deleteAccount();
+                showDeleteDialog();
                 return true;
 
             case R.id.action_sign_out:
@@ -93,6 +103,49 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void showDeleteDialog(){
+        DeleteAccountDialog deleteDialog = new DeleteAccountDialog();
+        deleteDialog.setDialogListener(new DeleteAccountDialog.DialogClickListener() {
+            @Override
+            public void onPositiveClick(DeleteAccountDialog dialog) {
+                reAuthUser();
+            }
+
+            @Override
+            public void onNegativeClick(DeleteAccountDialog dialog) {
+            }
+        });
+        deleteDialog.show(getSupportFragmentManager(), "DeleteAccountDialog");
+    }
+
+    private void reAuthUser(){
+        Log.d(LOG_TAG, "Attempting to re-authenticate user: " + mUser);
+
+        // Configure sign-in to request the user's ID, email address, and basic
+        // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.web_client_id))
+                .requestEmail()
+                .build();
+
+        Intent signInIntent = GoogleSignIn.getClient(this, gso).getSignInIntent();
+        startActivityForResult(signInIntent, RE_AUTH_DEL_REQUEST);
+    }
+
+    private OnCompleteListener<Void> mReAuthListener = new OnCompleteListener<Void>() {
+        @Override
+        public void onComplete(@NonNull Task<Void> task) {
+            if(task.isSuccessful()) {
+                Log.d(LOG_TAG, mUser + " re-authenticated.");
+
+                // Delete the user's data
+                deleteAccount();
+            }else{
+                Log.e(LOG_TAG, "Error re-authenticating user.", task.getException());
+            }
+        }
+    };
+
     // Deletes the user's data from Firestore
     private void deleteAccount(){
         String path = "users/" + mUser.getUid();
@@ -102,24 +155,46 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onComplete(@NonNull Task<HashMap> task) {
                         if(task.isSuccessful()){
-                            Log.d(LOG_TAG, "Successful notes delete. " + task.getResult());
-                            //// TODO: Delete user
+                            Log.d(LOG_TAG, "Successful account delete. " + task.getResult());
+
+                            // Delete the user
+                            mUser.delete().addOnCompleteListener(mUserDeleteListener);
                         }else{
                             Exception e = task.getException();
-                            Log.e(LOG_TAG, "Error deleting notes.", task.getException());
+                            Log.e(LOG_TAG, "Error deleting account.", task.getException());
 
                             if(e instanceof FirebaseFunctionsException){
                                 FirebaseFunctionsException ffe = (FirebaseFunctionsException) e;
                                 FirebaseFunctionsException.Code code = ffe.getCode();
                                 Object details = ffe.getDetails();
 
-                                Log.e(LOG_TAG, "Functions Exception on Delete Notes. code: " + code
-                                        + "\ndetails: " + details, ffe);
+                                Log.e(LOG_TAG, "Firebase Functions Exception on Delete Account. code: "
+                                        + code + "\ndetails: " + details, ffe);
                             }
                         }
                     }
                 });
     }
+
+    private OnCompleteListener<Void> mUserDeleteListener = new OnCompleteListener<Void>() {
+        @Override
+        public void onComplete(@NonNull Task<Void> task) {
+            String message;
+
+            if(task.isSuccessful()) {
+                message = "Your account has been deleted.";
+                Log.d(LOG_TAG, message);
+
+                redirectToLogin();
+            }else{
+                message = "There was an error deleting your account.";
+                Log.e(LOG_TAG, message, task.getException());
+            }
+
+            Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT)
+                    .show();
+        }
+    };
 
     // Gets the Recursive Delete callable Cloud Function
     private Task<HashMap> deleteRecursive(String path){
@@ -228,5 +303,29 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 });
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data){
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if(requestCode == RE_AUTH_DEL_REQUEST){
+            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+
+            try{
+                // Google Sign In was successful
+                GoogleSignInAccount account = task.getResult(ApiException.class);
+
+                // Get a Firebase credential
+                AuthCredential credential = GoogleAuthProvider.getCredential(account.getIdToken(), null);
+
+                mUser.reauthenticate(credential).addOnCompleteListener(mReAuthListener);
+
+            }catch(ApiException e){
+                Log.e(LOG_TAG, "Google sign in failed.", e);
+                Toast.makeText(this, "Google Sign in failed", Toast.LENGTH_SHORT)
+                        .show();
+            }
+        }
     }
 }

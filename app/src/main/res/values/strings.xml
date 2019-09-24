@@ -10,6 +10,14 @@
     <string name="add_note">Add Note</string>
     <string name="loading">Loading&#8230;</string>
 
+    <string name="delete_account">Delete Account</string>
+    <string name="delete_account_title">Delete your account?</string>
+    <string name="delete_account_confirm">Are you sure you want to delete your account? This action
+    cannot be undone.</string>
+
+    <string name="confirm">Confirm</string>
+    <string name="cancel">Cancel</string>
+
     <string name="appwidget_text">EXAMPLE</string>
     <string name="add_widget">Add widget</string>
 </resources>
