@@ -250,6 +250,10 @@ public class EditActivity extends AppCompatActivity {
     }
 
     private void hideKeyboard(){
+        if(getCurrentFocus() == null){
+            return;
+        }
+
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
     }
