@@ -6,8 +6,8 @@ android {
         applicationId "sammyt.jotnotes"
         minSdkVersion 16
         targetSdkVersion 28
-        versionCode 3
-        versionName "1.10"
+        versionCode 4
+        versionName "1.11"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
     }
