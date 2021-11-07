@@ -18,6 +18,8 @@ import android.widget.Toast;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.initialization.InitializationStatus;
+import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -245,7 +247,12 @@ public class MainActivity extends AppCompatActivity {
         AdView adView = findViewById(R.id.ad_view);
 
         // Initialize the Mobile Ads SDK w/ my App ID
-        MobileAds.initialize(this, getString(R.string.admob_app_id));
+        MobileAds.initialize(this, new OnInitializationCompleteListener() {
+            @Override
+            public void onInitializationComplete(@NonNull InitializationStatus initializationStatus) {
+                Log.d(LOG_TAG, "MobileAds init complete" + initializationStatus);
+            }
+        });
 
         // Load an ad
         AdRequest adRequest = new AdRequest.Builder().build();
