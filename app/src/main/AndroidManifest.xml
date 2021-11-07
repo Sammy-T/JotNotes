@@ -20,7 +20,9 @@
             android:enabled="true"
             android:exported="false" />
 
-        <receiver android:name=".widget.JotNotesWidget">
+        <receiver
+            android:name=".widget.JotNotesWidget"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -30,7 +32,9 @@
                 android:resource="@xml/jot_notes_widget_info" />
         </receiver>
 
-        <activity android:name=".LoginActivity">
+        <activity
+            android:name=".LoginActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
